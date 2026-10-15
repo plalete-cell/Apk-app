@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#090713">
+<title>GLITCH Lab — Android</title>
+<style>
+:root{color-scheme:dark;--cyan:#6efcff;--pink:#ff4fd8;--purple:#9a66ff}
+*{box-sizing:border-box}
+body{margin:0;background:#080710;color:#f4f2ff;font-family:system-ui,Arial,sans-serif;min-height:100vh}
+button,input,textarea,select{font:inherit}
+button{border:1px solid #5b5677;background:#171326;color:#fff;border-radius:12px;padding:12px 14px}
+button:active{transform:scale(.98)}
+header{padding:18px 16px 10px;background:linear-gradient(120deg,#180d2b,#06171c);border-bottom:1px solid #332a4d}
+h1{font-size:1.4rem;margin:0 0 4px;letter-spacing:.06em}
+.small{font-size:.9rem;color:#bdb7d3}
+main{padding:14px;max-width:760px;margin:auto}
+.panel{border:1px solid #37304e;background:#100d1d;border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1}
+label{display:block;color:#c9c3dc;font-size:.9rem;margin:10px 0 5px}
+input[type=number],input[type=password],textarea,select{width:100%;background:#090713;color:white;border:1px solid #4c4269;border-radius:10px;padding:10px}
+textarea{min-height:110px;resize:vertical}
+input[type=checkbox]{transform:scale(1.2);margin-right:8px}
+.primary{background:#3c1e67;border-color:#9c70d9}
+.danger{border-color:#9b456c}
+#stage{position:fixed;inset:0;z-index:20;display:none;overflow:hidden;background:#06040b}
+#stage.active{display:block}
+#stageImage{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.64;filter:saturate(1.35) contrast(1.15)}
+#shade{position:absolute;inset:0;background:linear-gradient(135deg,#0008,#12001b88,#00171c99)}
+#textLayer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:10vw;font-weight:900;font-size:clamp(1.7rem,7vw,4.2rem);letter-spacing:.04em;text-shadow:3px 0 var(--pink),-3px 0 var(--cyan),0 0 24px #a6faff;overflow-wrap:anywhere}
+.fragment{position:absolute;font-weight:800;font-size:clamp(.8rem,3vw,1.3rem);color:#fff;text-shadow:2px 0 var(--pink),-2px 0 var(--cyan);opacity:.85}
+.bar{position:absolute;height:3px;background:var(--cyan);opacity:.55;animation:blink .18s steps(2) infinite}
+@keyframes blink{50%{opacity:.05;transform:translateX(15px)}}
+#stageControls{position:absolute;bottom:16px;left:0;right:0;display:flex;justify-content:center;gap:8px;padding:0 12px}
+#stageControls button{backdrop-filter:blur(8px);background:#120c20dd}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #332a4d;margin:12px 0}
+.notice{font-size:.84rem;color:#c3bdd4;line-height:1.45}
+</style>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#090713"></head>
+<body>
+<header>
+  <h1>GLITCH LAB <span style="color:var(--cyan)">/ ANDROID</span></h1>
+  <div class="small">Randomized visual experiment · user-controlled</div>
+</header>
+<main id="controls">
+  <section class="panel">
+    <h2 style="margin:0 0 8px;font-size:1.1rem">Session timing</h2>
+    <div class="row">
+      <div><label for="minWait">Min wait (seconds)</label><input id="minWait" type="number" min="10" max="3600" value="45"></div>
+      <div><label for="maxWait">Max wait (seconds)</label><input id="maxWait" type="number" min="10" max="7200" value="240"></div>
+    </div>
+    <div class="row">
+      <div><label for="duration">Effect duration (seconds)</label><input id="duration" type="number" min="5" max="180" value="30"></div>
+      <div><label for="slide">Slide interval (seconds)</label><input id="slide" type="number" min="2" max="20" value="4"></div>
+    </div>
+    <label for="intensity">Glitch intensity</label>
+    <input id="intensity" type="range" min="1" max="10" value="6" style="width:100%">
+    <div class="row" style="margin-top:12px">
+      <button id="start" class="primary">Start random session</button>
+      <button id="stop" class="danger">Stop session</button>
+    </div>
+    <div id="status" class="small" style="margin-top:10px">Ready. The page stays visible until you start.</div>
+    <div id="countdown" class="small"></div>
+  </section>
+  <section class="panel">
+    <h2 style="margin:0 0 8px;font-size:1.1rem">Images and text</h2>
+    <label for="imageFiles">Choose images from your phone</label>
+    <input id="imageFiles" type="file" accept="image/*" multiple>
+    <div class="notice">Choose images stored on your device. They stay in this page and are not uploaded.</div>
+    <label for="textLines">English text fragments (one per line)</label>
+    <textarea id="textLines">THE SIGNAL IS CALLING
+THERE'S ANOTHER LAYER TO DISCOVER
+LET THE STATIC FADE
+STAY CURIOUS. WATCH WHAT CHANGES.
+ONE MORE LAYER TO DISCOVER
+THE PATTERN IS SHIFTING
+A MOMENT BETWEEN SIGNALS
+NOTICE WHAT YOU DIDN'T NOTICE BEFORE</textarea>
+    <label><input id="online" type="checkbox" checked>Use curated online images (internet required)</label>
+    <label><input id="sound" type="checkbox">Enable sound effects (optional)</label>
+    <div class="notice">Online image URLs are a small curated set. You can keep this off to use only your own images.</div>
+  </section>
+  <section class="panel">
+    <h2 style="margin:0 0 8px;font-size:1.1rem">Install on your phone</h2>
+    <p class="notice">In Chrome, open the browser menu (⋮) and choose <b>Add to Home screen</b> if available. This makes a convenient shortcut; it is not a native APK and Android may pause pages in the background.</p>
+    <p class="notice">Safety: tap <b>Exit effect</b> or use your phone's Back button to leave the visual effect. Stop session cancels future activations. This page cannot force itself open when closed or after a phone restart.</p>
+  </section>
+</main>
+<div id="stage" aria-live="polite">
+  <img id="stageImage" alt="">
+  <div id="shade"></div>
+  <div id="textLayer">THE SIGNAL IS CALLING</div>
+  <div id="stageControls">
+    <button id="exitEffect">Exit effect</button>
+    <button id="stopStage" class="danger">Stop session</button>
+  </div>
+</div>
+<script>
+(() => {
+ const $ = id => document.getElementById(id);
+ const stage=$('stage'), image=$('stageImage'), textLayer=$('textLayer');
+ let active=false, timer=null, slideTimer=null, endTimer=null, imageUrls=[], slideIndex=0, deadline=0, fragments=[];
+ const onlineImages=[
+  'https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=1400&q=85',
+  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1400&q=85',
+  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1400&q=85'
+ ];
+ // Save editable settings and text locally in this browser on this device.
+ const savedFields = ['minWait','maxWait','duration','slide','intensity','textLines','online','sound'];
+ try {
+   savedFields.forEach(id => {
+     const el = $(id), saved = localStorage.getItem('glitchlab:' + id);
+     if (saved !== null) {
+       if (el.type === 'checkbox') el.checked = saved === 'true';
+       else el.value = saved;
+     }
+     const save = () => localStorage.setItem('glitchlab:' + id, el.type === 'checkbox' ? String(el.checked) : el.value);
+     el.addEventListener('input', save);
+     el.addEventListener('change', save);
+   });
+ } catch (e) { /* Private browsing may disable local storage; app still works. */ }
+ function lines(){return $('textLines').value.split('\n').map(s=>s.trim()).filter(Boolean).length ? $('textLines').value.split('\n').map(s=>s.trim()).filter(Boolean) : ['THE SIGNAL IS CALLING'];}
+ function randomInt(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+ function setStatus(s){$('status').textContent=s;}
+ function chosenImages(){
+   const own=$('imageFiles').files;
+   const urls=[];
+   for(const f of own) if(f.type.startsWith('image/')) urls.push(URL.createObjectURL(f));
+   if($('online').checked) urls.push(...onlineImages);
+   return urls;
+ }
+ function cleanupUrls(){for(const u of imageUrls) if(u.startsWith('blob:')) URL.revokeObjectURL(u); imageUrls=[];}
+ function scheduleNext(){
+   if(!active) return;
+   const min=Math.max(10,Number($('minWait').value)||45);
+   const max=Math.max(min,Number($('maxWait').value)||240);
+   const wait=randomInt(min,max);
+   $('countdown').textContent=`Next activation in about ${wait} seconds.`;
+   setStatus('Waiting for the next randomized activation…');
+   timer=setTimeout(()=>{if(active) showEffect();},wait*1000);
+ }
+ function showEffect(){
+   imageUrls=chosenImages(); slideIndex=0;
+   stage.classList.add('active');
+   $('controls').classList.add('hidden');
+   document.body.style.overflow='hidden';
+   deadline=Date.now()+Math.max(5,Number($('duration').value)||30)*1000;
+   updateFrame();
+   slideTimer=setInterval(updateFrame,Math.max(2,Number($('slide').value)||4)*1000);
+   endTimer=setTimeout(()=>{hideEffect(); if(active) scheduleNext();},Math.max(5,Number($('duration').value)||30)*1000);
+ }
+ function updateFrame(){
+   if(!stage.classList.contains('active')) return;
+   const ls=lines(); textLayer.textContent=ls[randomInt(0,ls.length-1)];
+   const available=imageUrls;
+   if(available.length){
+     image.src=available[slideIndex % available.length];
+     image.onerror=()=>{image.removeAttribute('src');};
+     slideIndex++;
+   } else image.removeAttribute('src');
+   stage.querySelectorAll('.fragment,.bar').forEach(n=>n.remove());
+   const intensity=Number($('intensity').value)||6;
+   for(let i=0;i<intensity+2;i++){
+     const el=document.createElement('div'); el.className='fragment';
+     el.textContent=ls[randomInt(0,ls.length-1)];
+     el.style.left=randomInt(0,72)+'%'; el.style.top=randomInt(4,88)+'%';
+     el.style.transform=`rotate(${randomInt(-8,8)}deg)`;
+     stage.appendChild(el);
+   }
+   for(let i=0;i<intensity*2;i++){
+     const bar=document.createElement('div');bar.className='bar';
+     bar.style.top=randomInt(0,100)+'%';bar.style.left=randomInt(0,70)+'%';bar.style.width=randomInt(10,55)+'%';
+     bar.style.background=Math.random()>.5?'#6efcff':'#ff4fd8';stage.appendChild(bar);
+   }
+ }
+ function clearTimers(){clearTimeout(timer);clearInterval(slideTimer);clearTimeout(endTimer);timer=slideTimer=endTimer=null;}
+ function hideEffect(){
+   clearInterval(slideTimer);clearTimeout(endTimer);
+   stage.classList.remove('active');
+   $('controls').classList.remove('hidden');
+   document.body.style.overflow='';
+   if(active) setStatus('Effect ended. Waiting for next randomized activation…');
+ }
+ function start(){
+   const min=Number($('minWait').value)||45,max=Number($('maxWait').value)||240;
+   if(min<10||max<min){alert('Set maximum wait to at least the minimum, and minimum to 10 seconds or more.');return;}
+   active=true; $('start').disabled=true; $('stop').disabled=false;
+   setStatus('Session running. Keep this page open for random activations.');
+   scheduleNext();
+ }
+ function stop(){
+   active=false;clearTimers();hideEffect();
+   $('start').disabled=false;$('stop').disabled=true;
+   $('countdown').textContent='No future activations scheduled.';
+   setStatus('Session stopped.');
+ }
+ $('start').addEventListener('click',start);
+ $('stop').addEventListener('click',stop);
+ $('exitEffect').addEventListener('click',()=>{hideEffect(); if(active) setStatus('Effect closed manually. Random session remains active.');});
+ $('stopStage').addEventListener('click',stop);
+ window.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('active')){hideEffect();if(active)setStatus('Effect closed manually. Session remains active.');}});
+ window.addEventListener('popstate',()=>{if(stage.classList.contains('active'))hideEffect();});
+ $('stop').disabled=true;
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+</script></body>
+</html>
